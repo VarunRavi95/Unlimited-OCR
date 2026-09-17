@@ -1,0 +1,30 @@
+flowchart LR
+    subgraph client ["User Access"]
+        browser["Customer Browser"]
+    end
+    subgraph gateway ["EC2 Public Entry"]
+        caddy["Caddy HTTPS Proxy"]
+    end
+    subgraph service ["EC2 g6.2xlarge GPU Runtime"]
+        appService["FastAPI App and Single Worker"]
+        ocrService["Unlimited-OCR vLLM"]
+    end
+    subgraph datastore ["Private State and Artifacts"]
+        sqliteStore["SQLite Job Store"]
+        s3Store["Amazon S3 Invoice Bucket"]
+    end
+    subgraph external ["Managed and External Services"]
+        bedrock["Amazon Bedrock Claude Sonnet"]
+        huggingFace["Hugging Face Model Repository"]
+        cloudwatch["Amazon CloudWatch Logs"]
+    end
+
+    browser -->|"HTTPS 8443"| caddy
+    caddy -->|"Reverse proxy"| appService
+    appService <-->|"Docker network OCR"| ocrService
+    appService -->|"Job state"| sqliteStore
+    appService -->|"Sources and artifacts"| s3Store
+    appService -.->|"Bedrock: Translate and structure"| bedrock
+    appService -.->|"CloudWatch: App logs"| cloudwatch
+    ocrService -.->|"Hugging Face: Pinned model"| huggingFace
+    ocrService -.->|"CloudWatch: OCR logs"| cloudwatch

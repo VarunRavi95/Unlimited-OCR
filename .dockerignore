@@ -1,0 +1,14 @@
+.git
+.terraform
+.venv
+__pycache__
+*.py[cod]
+*.egg-info
+.pytest_cache
+.ruff_cache
+data
+infra
+scripts
+tests
+*.tfstate*
+*.tfplan

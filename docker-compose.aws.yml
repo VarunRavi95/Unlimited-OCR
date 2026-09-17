@@ -1,0 +1,13 @@
+services:
+  ocr:
+    logging:
+      driver: awslogs
+      options: {awslogs-region: "${AWS_REGION:-ap-south-1}", awslogs-group: "${CLOUDWATCH_LOG_GROUP:-/unlimited-ocr-poc/app}", awslogs-stream: ocr}
+  app:
+    logging:
+      driver: awslogs
+      options: {awslogs-region: "${AWS_REGION:-ap-south-1}", awslogs-group: "${CLOUDWATCH_LOG_GROUP:-/unlimited-ocr-poc/app}", awslogs-stream: app}
+  proxy:
+    logging:
+      driver: awslogs
+      options: {awslogs-region: "${AWS_REGION:-ap-south-1}", awslogs-group: "${CLOUDWATCH_LOG_GROUP:-/unlimited-ocr-poc/app}", awslogs-stream: proxy}

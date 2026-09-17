@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+set -euo pipefail
+export DEBIAN_FRONTEND=noninteractive
+apt-get update
+apt-get install -y git jq
+if ! command -v docker >/dev/null 2>&1; then
+  apt-get install -y docker.io
+fi
+if ! docker compose version >/dev/null 2>&1; then
+  apt-get install -y docker-compose-v2 || apt-get install -y docker-compose-plugin
+fi
+systemctl enable --now docker
+usermod -aG docker ubuntu
+if command -v nvidia-ctk >/dev/null 2>&1; then
+  nvidia-ctk runtime configure --runtime=docker
+  systemctl restart docker
+fi
+install -d -o ubuntu -g ubuntu /opt/unlimited-ocr-poc
+cat > /opt/unlimited-ocr-poc/.env <<'ENVFILE'
+AWS_REGION=${aws_region}
+S3_BUCKET=${s3_bucket}
+STORAGE_BACKEND=s3
+CLOUDWATCH_LOG_GROUP=${log_group_name}
+BEDROCK_MODEL_ID=global.anthropic.claude-sonnet-4-6
+OCR_MODEL_ID=baidu/Unlimited-OCR
+OCR_MODEL_REVISION=d549bb9d6a055dbe291408916d66acc2cd5920f6
+OCR_IMAGE=vllm/vllm-openai@sha256:542961a42d9183813819a23ef3a8b50bfb4f5ef7b0fb4f8e4f56edd8445efb18
+ENVFILE
+chown ubuntu:ubuntu /opt/unlimited-ocr-poc/.env
+chmod 0600 /opt/unlimited-ocr-poc/.env
+nvidia-smi > /var/log/unlimited-ocr-nvidia-smi.log 2>&1 || true
+touch /var/lib/cloud/instance/unlimited-ocr-bootstrap-complete

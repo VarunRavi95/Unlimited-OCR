@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Traceable multilingual invoice extraction powered by Baidu Unlimited-OCR and Amazon Bedrock.">
+  <title>Invoice Intelligence | Extraction Workspace</title>
+  <link rel="stylesheet" href="/static/styles.css?v=20260806-3">
+</head>
+<body>
+  <header class="app-header">
+    <div class="header-inner">
+      <a class="brand" href="/" aria-label="Invoice Intelligence home">
+        <span class="brand-mark" aria-hidden="true"><span>II</span></span>
+        <span class="brand-copy">
+          <strong>Invoice Intelligence</strong>
+          <small>Extraction workspace</small>
+        </span>
+      </a>
+      <div class="header-meta">
+        <span class="environment-badge">AWS PoC</span>
+        <span id="service-status" class="status-pill" aria-live="polite">
+          <span class="status-dot"></span>
+          Checking services
+        </span>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero" aria-labelledby="hero-title">
+      <div class="hero-copy-block">
+        <p class="eyebrow">DOCUMENT AI FOR ACCOUNTS PAYABLE</p>
+        <h1 id="hero-title">From invoice to<br><span>traceable AP data.</span></h1>
+        <p class="hero-copy">Extract, translate, and structure multilingual invoices while keeping every output linked to its original source.</p>
+        <div class="capability-list" aria-label="Capabilities">
+          <span><i aria-hidden="true"></i> PDF, JPEG &amp; PNG</span>
+          <span><i aria-hidden="true"></i> Multilingual OCR</span>
+          <span><i aria-hidden="true"></i> Evidence-backed fields</span>
+        </div>
+      </div>
+
+      <aside class="journey-card" aria-label="Processing journey">
+        <div class="journey-header">
+          <div>
+            <p class="eyebrow inverse">PROCESSING PIPELINE</p>
+            <h2>One document. Four traceable stages.</h2>
+          </div>
+          <span class="secure-chip">Private S3</span>
+        </div>
+        <ol class="journey-steps">
+          <li><span>01</span><div><strong>Upload</strong><small>Validate and store source</small></div></li>
+          <li><span>02</span><div><strong>Read</strong><small>Baidu Unlimited-OCR</small></div></li>
+          <li><span>03</span><div><strong>Understand</strong><small>Translate and normalize</small></div></li>
+          <li><span>04</span><div><strong>Deliver</strong><small>JSON and audit artifacts</small></div></li>
+        </ol>
+        <div class="journey-footer">
+          <span><b>4</b> linked artifacts</span>
+          <span><b>20</b> page maximum</span>
+          <span><b>1</b> active GPU job</span>
+        </div>
+      </aside>
+    </section>
+
+    <section class="workspace-intro" aria-labelledby="workspace-title">
+      <div>
+        <p class="eyebrow">LIVE WORKSPACE</p>
+        <h2 id="workspace-title">Process an invoice</h2>
+      </div>
+      <p>Submit a document and follow it from OCR to structured output.</p>
+    </section>
+
+    <section class="workspace-grid">
+      <article class="panel upload-panel">
+        <div class="panel-heading">
+          <div class="heading-group">
+            <span class="section-number">01</span>
+            <div><p class="section-label">SUBMIT</p><h3>Upload invoice</h3></div>
+          </div>
+          <span class="required-label">Required</span>
+        </div>
+
+        <form id="upload-form">
+          <label class="drop-zone" for="invoice-file" id="drop-zone">
+            <input id="invoice-file" name="file" type="file" accept="application/pdf,image/jpeg,image/png" required>
+            <span class="upload-glyph" aria-hidden="true"><span>&uarr;</span></span>
+            <strong id="file-label">Drop an invoice here</strong>
+            <span class="drop-helper">or click to browse from your computer</span>
+            <span id="file-meta" class="file-meta hidden"></span>
+            <span class="format-row" aria-label="Supported formats">
+              <small>PDF</small><small>JPEG</small><small>PNG</small>
+            </span>
+            <span class="limit-copy">Up to {{ max_upload_mb }} MB &middot; {{ max_pages }} pages &middot; {{ minimum_dpi }} DPI recommended</span>
+          </label>
+          <button id="submit-button" class="primary-button" type="submit">
+            <span class="button-label">Start extraction</span>
+            <span class="button-spinner" aria-hidden="true"></span>
+            <span class="button-arrow" aria-hidden="true">&rarr;</span>
+          </button>
+          <p id="form-message" class="form-message" role="alert" aria-live="polite"></p>
+        </form>
+
+        <div id="job-card" class="job-card hidden" aria-live="polite">
+          <div class="job-header">
+            <div><p class="section-label">CURRENT JOB</p><code id="job-id"></code></div>
+            <div id="job-status" class="job-state">Queued</div>
+          </div>
+          <div class="progress-track" aria-hidden="true"><span id="progress-bar"></span></div>
+          <div class="job-stage-row">
+            <span class="activity-pulse" aria-hidden="true"></span>
+            <p id="job-stage">Waiting for the worker</p>
+          </div>
+          <div class="job-live-details" aria-live="polite">
+            <span id="job-elapsed">Elapsed 0s</span>
+            <span id="job-activity">Waiting for processing activity</span>
+          </div>
+          <ol id="job-pipeline" class="job-pipeline" aria-label="Job progress">
+            <li data-stage="queued"><span></span>Queued</li>
+            <li data-stage="ocr"><span></span>OCR</li>
+            <li data-stage="bedrock"><span></span>Structure</li>
+            <li data-stage="completed"><span></span>Complete</li>
+          </ol>
+          <button id="retry-button" class="secondary-button hidden" type="button">Retry failed job</button>
+        </div>
+      </article>
+
+      <article class="panel preview-panel">
+        <div class="panel-heading">
+          <div class="heading-group">
+            <span class="section-number">02</span>
+            <div><p class="section-label">SOURCE</p><h3>Document preview</h3></div>
+          </div>
+          <span id="preview-label" class="preview-label">No document</span>
+        </div>
+        <div id="preview-empty" class="empty-state">
+          <div class="document-placeholder" aria-hidden="true">
+            <span class="placeholder-fold"></span>
+            <i></i><i></i><i></i><i></i>
+          </div>
+          <strong>Your source document will appear here</strong>
+          <p>The original remains linked to the extraction for review and audit.</p>
+        </div>
+        <iframe id="source-preview" class="source-preview hidden" title="Uploaded invoice preview"></iframe>
+      </article>
+    </section>
+
+    <section id="results" class="panel results-panel hidden" aria-labelledby="results-title">
+      <div class="results-heading">
+        <div class="heading-group">
+          <span class="section-number success">03</span>
+          <div><p class="section-label">RESULTS</p><h2 id="results-title">Extraction complete</h2></div>
+        </div>
+        <nav class="artifact-links" id="artifact-links" aria-label="Download artifacts"></nav>
+      </div>
+
+      <section id="trust-panel" class="trust-panel hidden" aria-labelledby="trust-title">
+        <div class="trust-panel-header">
+          <div>
+            <p class="section-label">TRUST &amp; REVIEW</p>
+            <h3 id="trust-title">Evidence assessment</h3>
+          </div>
+          <span id="trust-document-status" class="trust-badge not-assessed">Not assessed</span>
+        </div>
+        <p id="trust-summary" class="trust-summary"></p>
+        <div id="trust-counts" class="trust-counts"></div>
+        <ul id="trust-reasons" class="trust-reasons"></ul>
+        <details class="trust-legend">
+          <summary>How to interpret this assessment</summary>
+          <div class="trust-legend-grid">
+            <span><i class="supported"></i><strong>Evidence supported</strong> Exact OCR evidence and checks support the value.</span>
+            <span><i class="review"></i><strong>Review</strong> Evidence or a validation signal needs attention.</span>
+            <span><i class="unsupported"></i><strong>Unsupported</strong> The populated value lacks adequate OCR support.</span>
+            <span><i class="not-assessed"></i><strong>Not assessed</strong> No value or no applicable assessment.</span>
+          </div>
+          <p id="trust-disclaimer"></p>
+        </details>
+      </section>
+
+      <div id="warnings" class="warnings hidden"></div>
+      <div class="summary-grid" id="summary-grid"></div>
+
+      <div class="tabs" role="tablist" aria-label="Extraction result views">
+        <button class="tab active" data-tab="fields" role="tab" aria-selected="true" type="button">Overview</button>
+        <button class="tab" data-tab="items" role="tab" aria-selected="false" type="button">Line items</button>
+        <button class="tab" data-tab="trust" role="tab" aria-selected="false" type="button">Trust details</button>
+        <button class="tab" data-tab="translation" role="tab" aria-selected="false" type="button">English translation</button>
+        <button class="tab" data-tab="json" role="tab" aria-selected="false" type="button">Structured JSON</button>
+      </div>
+
+      <div id="tab-fields" class="tab-content" role="tabpanel"></div>
+      <div id="tab-items" class="tab-content hidden" role="tabpanel"></div>
+      <div id="tab-trust" class="tab-content hidden" role="tabpanel"></div>
+      <div id="tab-translation" class="tab-content hidden" role="tabpanel">
+        <div class="content-toolbar"><span>Translated OCR Markdown</span></div>
+        <pre id="translation-content" class="document-text"></pre>
+      </div>
+      <div id="tab-json" class="tab-content hidden" role="tabpanel">
+        <div class="content-toolbar"><span>Schema-valid invoice object</span><button id="copy-json-button" type="button">Copy JSON</button></div>
+        <pre id="json-content" class="document-text"></pre>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div><strong>Invoice Intelligence</strong><span>Customer demonstration environment</span></div>
+    <p>Missing values remain null &middot; Evidence stays linked &middot; Model likelihood is never presented as calibrated confidence</p>
+  </footer>
+  <script src="/static/app.js?v=20260807-2" defer></script>
+</body>
+</html>

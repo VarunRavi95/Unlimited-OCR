@@ -1,0 +1,16 @@
+.env
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.venv/
+data/
+certs/
+*.pem
+*.key
+terraform.tfvars

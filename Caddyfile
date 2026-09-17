@@ -1,0 +1,16 @@
+{
+  admin off
+  default_sni {$PUBLIC_HOST}
+}
+https://{$PUBLIC_HOST}:8443 {
+  tls internal
+  encode zstd gzip
+  header {
+    Strict-Transport-Security "max-age=31536000"
+    X-Content-Type-Options "nosniff"
+    X-Frame-Options "SAMEORIGIN"
+    Referrer-Policy "no-referrer"
+    -Server
+  }
+  reverse_proxy app:8000
+}

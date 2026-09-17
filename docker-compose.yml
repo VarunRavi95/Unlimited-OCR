@@ -1,0 +1,58 @@
+name: unlimited-ocr-poc
+services:
+  ocr:
+    image: ${OCR_IMAGE:-vllm/vllm-openai@sha256:542961a42d9183813819a23ef3a8b50bfb4f5ef7b0fb4f8e4f56edd8445efb18}
+    command: ["baidu/Unlimited-OCR", "--revision", "${OCR_MODEL_REVISION:-d549bb9d6a055dbe291408916d66acc2cd5920f6}", "--dtype", "${OCR_DTYPE:-float16}", "--mm-encoder-attn-backend", "${OCR_MM_ENCODER_ATTN_BACKEND:-TORCH_SDPA}", "--served-model-name", "baidu/Unlimited-OCR", "--trust-remote-code", "--logits_processors", "vllm.model_executor.models.unlimited_ocr:NGramPerReqLogitsProcessor", "--no-enable-prefix-caching", "--mm-processor-cache-gb", "0", "--max-model-len", "32768", "--gpu-memory-utilization", "0.85", "--host", "0.0.0.0", "--port", "8000"]
+    environment:
+      HF_HUB_DISABLE_TELEMETRY: "1"
+    ipc: host
+    shm_size: 16gb
+    volumes:
+      - hf-cache:/root/.cache/huggingface
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    healthcheck:
+      test: ["CMD-SHELL", "curl --fail --silent --show-error --max-time 3 http://127.0.0.1:8000/health >/dev/null"]
+      interval: 30s
+      timeout: 5s
+      start_period: 20m
+      retries: 20
+    restart: unless-stopped
+  app:
+    build:
+      context: .
+      dockerfile: app/Dockerfile
+    env_file: .env
+    environment:
+      DATA_DIR: /app/data
+      OCR_BASE_URL: http://ocr:8000
+    volumes:
+      - app-data:/app/data
+    depends_on:
+      ocr:
+        condition: service_healthy
+    restart: unless-stopped
+  proxy:
+    image: caddy:2.10.2-alpine
+    environment:
+      PUBLIC_HOST: ${PUBLIC_HOST}
+    ports:
+      - "8443:8443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      app:
+        condition: service_healthy
+    restart: unless-stopped
+volumes:
+  app-data:
+  hf-cache:
+  caddy-data:
+  caddy-config:
